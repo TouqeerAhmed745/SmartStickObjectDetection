@@ -10,6 +10,8 @@ import numpy as np
 import urllib.request
 from flask import request
 
+import desktop
+
 app = flask.Flask(__name__)
 
 label = "pothole"
@@ -22,6 +24,9 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/favicon.png')
 
+@app.route('/desktop')
+def desktop():
+    return desktop.ObjectDetect()
 
 @app.route('/')
 @app.route('/home', methods=["GET", "POST"])
