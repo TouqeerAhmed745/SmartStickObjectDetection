@@ -26,17 +26,33 @@ def favicon():
 @app.route('/')
 @app.route('/home', methods=["GET", "POST"])
 def home():
-    default_value = '0'
+    default_value = ""
     url = request.form.get('url', default_value)
     print(url)
-    ObjectDetect(url)
-    detectImage(url)
-    return {"response":
-                {"pothole_detection": total, "objectDetection": objectDetection}}
+    if url != default_value:
+        ObjectDetect(url)
+        detectImage(url)
+        return {
+            "response":
+                {
+                    "status": 200,
+                    "massage": "Successfully get Result",
+                    "pothole_detection": total, "objectDetection": objectDetection
+
+                }
+        }
+    else:
+        return {
+            "response":
+                {
+                    "status": 201,
+                    "massage": "Please Provide Url",
+                }
+        }
 
 
 def ObjectDetect(url):
-    #img = cv2.imread('data/picture/lena.png')
+    # img = cv2.imread('data/picture/lena.png')
     url_response = urllib.request.urlopen(url)
     img_array = np.array(bytearray(url_response.read()), dtype=np.uint8)
     img = cv2.imdecode(img_array, -1)
