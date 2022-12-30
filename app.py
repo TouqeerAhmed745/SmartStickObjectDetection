@@ -9,12 +9,20 @@ import urllib
 import numpy as np
 import urllib.request
 from flask import request
+import math
+
+from distance_to_camera import find_marker
 
 app = flask.Flask(__name__)
 
 label = "pothole"
-total = []
+potholes = []
+potholeDistance = []
 objectDetection = []
+KNOWN_DISTANCE = 24.0
+# initialize the known object width, which in this case, the piece of
+# paper is 12 inches wide
+KNOWN_WIDTH = 11.0
 
 
 @app.route('/favicon')
@@ -37,7 +45,7 @@ def home():
                 {
                     "status": 200,
                     "massage": "Successfully get Result",
-                    "pothole_detection": total, "objectDetection": objectDetection
+                    "pothole_detection": potholes, "objectDetection": objectDetection,"potholesDistance":potholeDistance
 
                 }
         }
@@ -73,12 +81,15 @@ def ObjectDetect(url):
     objectDetection.clear()
     for classIds, scores, box in zip(classIds, scores, bbox):
         name = classNames[classIds - 1]
-        print(name)
         objectDetection.append(name)
 
         # cv2.imshow('output',img)
 
     # cv2.waitKey(0)
+
+
+def distance_to_camera(knownWidth, focalLength, perWidth):
+    return (knownWidth * focalLength) / perWidth
 
 
 def detectImage(url):
@@ -96,11 +107,30 @@ def detectImage(url):
     model.setInputParams(scale=1 / 255, size=(416, 416), swapRB=True)
     classIds, scores, boxes = model.detect(img, confThreshold=0.6, nmsThreshold=0.4)
     # detection
-    total.clear()
+    potholes.clear()
+    potholeDistance.clear()
     for (classId, score, box) in zip(classIds, scores, boxes):
         x, y, w, h = box
-        print(str(round(scores[0] * 100, 2)))
-        total.append(label + ": " + str(round(scores[0] * 100, 2)))
+        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 1)
+        cv2.imwrite("im.jpg", img)
+
+        #  marker = find_marker(img)
+        t = 101
+        d = 50
+        height, width, channels = img.shape
+        # print 'width: ', width
+        # print 'Traget width: ' , w
+        v = t / (w / width)  # w is how many pixels wide is the object
+        # print v
+        h = 0.5 * v / (math.tan(math.radians(d) / 2))
+        # now we need to use basic trigo to caculate actualy distance, given that he camera is tilted
+        tilt = 30  # the tilt of the camera, in degrees
+        distance = h * (math.cos(math.radians(tilt)))
+
+       # focalLength = (marker[1][0] * KNOWN_DISTANCE) / KNOWN_WIDTH
+      #  Distance = distance_to_camera(KNOWN_WIDTH, focalLength, marker[1][0])
+        potholeDistance.append(round(distance,2))
+        potholes.append(label + ": " + str(round(scores[0] * 100, 2)))
 
 
 if __name__ == "__main__":
