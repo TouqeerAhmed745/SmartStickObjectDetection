@@ -10,8 +10,6 @@ import numpy as np
 import urllib.request
 from flask import request
 
-import desktop
-
 app = flask.Flask(__name__)
 
 label = "pothole"
