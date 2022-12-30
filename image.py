@@ -28,3 +28,5 @@ def imageDetection():
     cv2.imwrite("result1" + ".jpg", img)  # result name
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+imageDetection()
