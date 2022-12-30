@@ -1,4 +1,3 @@
-
 import flask
 import os
 import cv2
@@ -21,7 +20,7 @@ app = flask.Flask(__name__)
 UPLOAD_FOLDER = os.path.join('staticFiles', 'uploads')
 ALLOWED_EXTENSIONS = {'jpg'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-url =""
+url = ""
 label = "pothole"
 potholes = []
 potholeDistance = []
@@ -37,32 +36,41 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/favicon.png')
 
+
 @app.route('/')
 @app.route('/detectImageFile', methods=["GET", "POST"])
 def detectImageFile():
-    if  request.method == 'POST':
+    if request.method == 'POST':
         # Upload file flask
         uploaded_img = request.files['uploaded-file']
-        # Extracting uploaded data file name
-        img_filename = secure_filename(uploaded_img.filename)
-        # Upload file to database (defined uploaded folder in static path)
-        uploaded_img.save(os.path.join(app.config['UPLOAD_FOLDER'], img_filename))
-        # Storing uploaded file path in flask session
+        if uploaded_img.filename != "":
+            # Extracting uploaded data file name
+            img_filename = secure_filename(uploaded_img.filename)
+            # Upload file to database (defined uploaded folder in static path)
+            uploaded_img.save(os.path.join(app.config['UPLOAD_FOLDER'], img_filename))
+            # Storing uploaded file path in flask session
+            url = os.path.join(app.config['UPLOAD_FOLDER'], img_filename)
+            if url != "":
+                ObjectDetectFile(url)
+                detectPotholeImageFile(url)
+                return {
+                    "response":
+                        {
+                            "status": 200,
+                            "massage": "Successfully get Result",
+                            "pothole_detection": potholes, "objectDetection": objectDetection,
+                            "potholesDistance": potholeDistance
 
-        url = os.path.join(app.config['UPLOAD_FOLDER'], img_filename)
-        print(url)
-        if url != "":
-            ObjectDetectFile(url)
-            detectPotholeImageFile(url)
-            return {
-                "response":
-                    {
-                        "status": 200,
-                        "massage": "Successfully get Result",
-                        "pothole_detection": potholes, "objectDetection": objectDetection,"potholesDistance":potholeDistance
-
-                    }
-            }
+                        }
+                }
+            else:
+                return {
+                    "response":
+                        {
+                            "status": 201,
+                            "massage": "Please Provide Url",
+                        }
+                }
         else:
             return {
                 "response":
@@ -77,11 +85,12 @@ def detectImageFile():
 def fileFromUrl():
     return DetectObjectPotholeUrl.fileFromUrl()
 
+
 def ObjectDetectFile(url):
     img = cv2.imread(url)
-    #url_response = urllib.request.urlopen(url)
-    #img_array = np.array(bytearray(url_response.read()), dtype=np.uint8)
-    #img = cv2.imdecode(img_array, -1)
+    # url_response = urllib.request.urlopen(url)
+    # img_array = np.array(bytearray(url_response.read()), dtype=np.uint8)
+    # img = cv2.imdecode(img_array, -1)
     classFile = 'coco.names'
     with open(classFile, 'rt') as f:
         classNames = f.read().rstrip('\n').split('\n')
@@ -111,12 +120,12 @@ def distance_to_camera(knownWidth, focalLength, perWidth):
 
 
 def detectPotholeImageFile(url):
-   # url_response = urllib.request.urlopen(url)
-    #img_array = np.array(bytearray(url_response.read()), dtype=np.uint8)
-   # img = cv2.imdecode(img_array, -1)
+    # url_response = urllib.request.urlopen(url)
+    # img_array = np.array(bytearray(url_response.read()), dtype=np.uint8)
+    # img = cv2.imdecode(img_array, -1)
     img = cv2.imread(url)
 
-   # img = cv2.imread("data/picture/p5.jpg")  # image name
+    # img = cv2.imread("data/picture/p5.jpg")  # image name
     # reading label name from obj.names file
     with open(os.path.join("project_files", 'obj.names'), 'r') as f:
         classes = f.read().splitlines()
@@ -146,9 +155,10 @@ def detectPotholeImageFile(url):
         tilt = 30  # the tilt of the camera, in degrees
         distance = h * (math.cos(math.radians(tilt)))
 
-        potholeDistance.append(round(distance,2))
+        potholeDistance.append(round(distance, 2))
         potholes.append(label + ": " + str(round(scores[0] * 100, 2)))
     os.remove(url)
+
 
 if __name__ == "__main__":
     app.secret_key = '25d9984ab936d7f1eb755fdd49e3882ae797e644c5996d56c097b40d6e72408b'
