@@ -10,6 +10,7 @@ import numpy as np
 import urllib.request
 from flask import request
 import math
+import cloudinary.uploader
 
 from werkzeug.utils import secure_filename
 
@@ -29,7 +30,12 @@ KNOWN_DISTANCE = 24.0
 # initialize the known object width, which in this case, the piece of
 # paper is 12 inches wide
 KNOWN_WIDTH = 11.0
-
+cloudinary.config(
+  cloud_name = "hxxzjcaxg",
+  api_key = "136645526344335",
+  api_secret = "1bakms4V8UiBG-ThGeiYTSA4uKA",
+  secure = True
+)
 
 @app.route('/favicon')
 def favicon():
@@ -44,12 +50,15 @@ def detectImageFile():
         # Upload file flask
         uploaded_img = request.files['uploaded-file']
         if uploaded_img.filename != "":
+            url = cloudinary.uploader.upload(uploaded_img)
+            print(uploaded_img.filename )
+
             # Extracting uploaded data file name
-            img_filename = secure_filename(uploaded_img.filename)
+            #img_filename = secure_filename(uploaded_img.filename)
             # Upload file to database (defined uploaded folder in static path)
-            uploaded_img.save(os.path.join(app.config['UPLOAD_FOLDER'], img_filename))
+            #uploaded_img.save(os.path.join(app.config['UPLOAD_FOLDER'], img_filename))
+            print(url)
             # Storing uploaded file path in flask session
-            url = os.path.join(app.config['UPLOAD_FOLDER'], img_filename)
             if url != "":
                 ObjectDetectFile(url)
                 detectPotholeImageFile(url)
@@ -87,6 +96,7 @@ def fileFromUrl():
 
 
 def ObjectDetectFile(url):
+    print(url)
     img = cv2.imread(url)
     # url_response = urllib.request.urlopen(url)
     # img_array = np.array(bytearray(url_response.read()), dtype=np.uint8)
@@ -162,5 +172,5 @@ def detectPotholeImageFile(url):
 
 if __name__ == "__main__":
     app.secret_key = '25d9984ab936d7f1eb755fdd49e3882ae797e644c5996d56c097b40d6e72408b'
-    app.debug = False
+    app.debug = True
     app.run()
